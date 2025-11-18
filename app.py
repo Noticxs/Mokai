@@ -62,15 +62,31 @@ def download_file(url, file_format, download_id, custom_path=None):
             'extract_flat': False,
             'no_warnings': True,
             'quiet': True,
+            'writethumbnail': True,
+            'embedthumbnail': True,
+            'postprocessors': [{
+                'key': 'FFmpegMetadata',
+                'add_metadata': True,
+            }],
         }
 
         if file_format == 'mp3':
             ydl_opts['format'] = 'bestaudio/best'
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }]
+            ydl_opts['postprocessors'] = [
+                {
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                },
+                {
+                    'key': 'FFmpegMetadata',
+                    'add_metadata': True,
+                },
+                {
+                    'key': 'EmbedThumbnail',
+                    'already_have_thumbnail': False,
+                }
+            ]
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             update_progress(download_id, 'extracting', 5, 'Extracting video information...')
