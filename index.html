@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mokai</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>Mokai</h1>
+            <form id="download-form">
+                <div class="form-group">
+                    <label for="url">📎 Video URL:</label>
+                    <input
+                        type="text"
+                        id="url"
+                        name="url"
+                        placeholder="Paste YouTube/video URL here..."
+                        required
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="format">🎵 Format:</label>
+                    <select id="format" name="format">
+                        <option value="mp4">🎥 MP4 (Video)</option>
+                        <option value="mp3">🎵 MP3 (Audio Only)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="custom-path"
+                        >📁 Download Directory (Optional):</label
+                    >
+                    <input
+                        type="text"
+                        id="custom-path"
+                        name="custom-path"
+                        placeholder="Leave empty for default (./music)"
+                    />
+                    <div class="path-hint">
+                        Examples: /Users/username/Downloads, C:\\Downloads,
+                        ./my_videos
+                    </div>
+                </div>
+                <button type="submit" class="download-btn">⬇️ Download</button>
+            </form>
+        </div>
+
+        <div id="popup">
+            <div id="popup-content">
+                <div class="loader"></div>
+                <p id="progress-text">Starting download...</p>
+                <div class="progress-container">
+                    <progress id="progress-bar" value="0" max="100"></progress>
+                </div>
+                <div id="progress-details" class="progress-details"></div>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById("download-form").onsubmit = function (e) {
+                e.preventDefault();
+
+                const url = document.getElementById("url").value.trim();
+                const format = document.getElementById("format").value;
+                const customPath = document
+                    .getElementById("custom-path")
+                    .value.trim();
+                const downloadId =
+                    Math.random().toString(36).substr(2, 9) +
+                    Date.now().toString(36);
+
+                // Show popup
+                document.getElementById("popup").style.display = "flex";
+                document.getElementById("progress-text").textContent =
+                    "Starting download...";
+                document.getElementById("progress-bar").value = 0;
+                document.getElementById("progress-details").textContent = "";
+
+                // Start download
+                fetch("/download", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        url: url,
+                        format: format,
+                        download_id: downloadId,
+                        custom_path: customPath || null,
+                    }),
+                }).catch((err) => {
+                    console.error("Download request failed:", err);
+                    document.getElementById("progress-text").textContent =
+                        "Failed to start download";
+                    document.getElementById("progress-text").className =
+                        "error";
+                    setTimeout(
+                        () =>
+                            (document.getElementById("popup").style.display =
+                                "none"),
+                        3000,
+                    );
+                });
+
+                let finished = false;
+                const interval = setInterval(() => {
+                    fetch("/progress?download_id=" + downloadId)
+                        .then((r) => r.json())
+                        .then((data) => {
+                            const progressBar =
+                                document.getElementById("progress-bar");
+                            const progressText =
+                                document.getElementById("progress-text");
+                            const progressDetails =
+                                document.getElementById("progress-details");
+
+                            progressBar.value = data.progress || 0;
+
+                            if (data.status === "starting") {
+                                progressText.textContent = "Initializing...";
+                                progressText.className = "";
+                            } else if (data.status === "extracting") {
+                                progressText.textContent =
+                                    "Extracting video information...";
+                                progressText.className = "";
+                            } else if (data.status === "downloading") {
+                                progressText.textContent =
+                                    data.message || "Downloading...";
+                                progressText.className = "";
+                                progressDetails.textContent = `Progress: ${Math.round(data.progress)}%`;
+                            } else if (data.status === "downloading_multiple") {
+                                progressText.textContent =
+                                    data.message || "Downloading playlist...";
+                                progressText.className = "";
+                                if (data.total_items > 1) {
+                                    progressDetails.textContent = `Item ${data.current_item} of ${data.total_items} • ${Math.round(data.progress)}%`;
+                                } else {
+                                    progressDetails.textContent = `Progress: ${Math.round(data.progress)}%`;
+                                }
+                            } else if (data.status === "finished") {
+                                progressText.textContent =
+                                    data.message || "Download completed! ✅";
+                                progressText.className = "success";
+                                progressDetails.textContent = "100% Complete";
+                                if (!finished) {
+                                    finished = true;
+                                    setTimeout(() => {
+                                        document.getElementById(
+                                            "popup",
+                                        ).style.display = "none";
+                                        document.getElementById("url").value =
+                                            "";
+                                    }, 3000);
+                                    clearInterval(interval);
+                                }
+                            } else if (data.status === "error") {
+                                progressText.textContent =
+                                    "Error: " +
+                                    (data.message || "Unknown error occurred");
+                                progressText.className = "error";
+                                progressDetails.textContent = "";
+                                setTimeout(
+                                    () =>
+                                        (document.getElementById(
+                                            "popup",
+                                        ).style.display = "none"),
+                                    4000,
+                                );
+                                clearInterval(interval);
+                            }
+                        })
+                        .catch((err) => {
+                            console.error("Progress check failed:", err);
+                            if (!finished) {
+                                document.getElementById(
+                                    "progress-text",
+                                ).textContent = "Connection error";
+                                document.getElementById(
+                                    "progress-text",
+                                ).className = "error";
+                                setTimeout(
+                                    () =>
+                                        (document.getElementById(
+                                            "popup",
+                                        ).style.display = "none"),
+                                    3000,
+                                );
+                                clearInterval(interval);
+                            }
+                        });
+                }, 500); // Check more frequently for smoother updates
+            };
+        </script>
+    </body>
+</html>
