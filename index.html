@@ -2,8 +2,10 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
+        <meta name="darkreader-lock" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Mokai</title>
+        <link rel="icon" href="/Mokai.png" />
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
@@ -46,8 +48,18 @@
             </form>
         </div>
 
-        <div id="popup">
-            <div id="popup-content">
+        <!-- Floating Action Trigger Button -->
+        <button
+            id="history-toggle-button"
+            class="floating-action-button"
+            title="View Download History"
+        >
+            📜
+        </button>
+
+        <!-- FIXED: Progress Modal Overlay Screen now hidden by default -->
+        <div id="popup" class="modal-overlay hidden">
+            <div id="popup-content" class="modal-card">
                 <div class="loader"></div>
                 <p id="progress-text">Starting download...</p>
                 <div class="progress-container">
@@ -57,8 +69,68 @@
             </div>
         </div>
 
+        <!-- Screen-Takeover History Panel Modal Overlay Container -->
+        <div id="history-panel" class="modal-overlay hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Download History</h2>
+                    <button
+                        id="history-close-button"
+                        class="close-btn"
+                        title="Close Panel"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <ul id="history-list">
+                    <!-- Sample items injected dynamically will look like this: -->
+                    <!-- <li><span class="history-url">https://youtube.com/watch?v=...</span><span class="success">Completed</span></li> -->
+                </ul>
+                <button id="clear-history" class="clear-history">
+                    Clear History
+                </button>
+            </div>
+        </div>
+
         <script>
-            document.getElementById("download-form").onsubmit = function (e) {
+            // Elements
+            const historyPanel = document.getElementById("history-panel");
+            const historyToggle = document.getElementById(
+                "history-toggle-button",
+            );
+            const historyClose = document.getElementById(
+                "history-close-button",
+            );
+            const clearHistory = document.getElementById("clear-history");
+            const historyList = document.getElementById("history-list");
+            const downloadForm = document.getElementById("download-form");
+            const popup = document.getElementById("popup");
+
+            // Open/Toggle History Modal Screen
+            historyToggle.onclick = function () {
+                historyPanel.classList.remove("hidden");
+            };
+
+            // Close History Modal Screen via 'X'
+            historyClose.onclick = function () {
+                historyPanel.classList.add("hidden");
+            };
+
+            // Close History or Progress if clicking dark background space outside cards
+            window.onclick = function (e) {
+                if (e.target === historyPanel) {
+                    historyPanel.classList.add("hidden");
+                }
+            };
+
+            // Clear Dynamic Inner Lists
+            clearHistory.onclick = function () {
+                historyList.innerHTML =
+                    '<li class="empty-history-msg">No downloads logged yet.</li>';
+            };
+
+            // Form Submit Routine
+            downloadForm.onsubmit = function (e) {
                 e.preventDefault();
 
                 const url = document.getElementById("url").value.trim();
@@ -70,14 +142,25 @@
                     Math.random().toString(36).substr(2, 9) +
                     Date.now().toString(36);
 
-                // Show popup
-                document.getElementById("popup").style.display = "flex";
+                // Open active tracking modal overlay display state
+                popup.classList.remove("hidden"); // Clean class toggle support
+                popup.style.display = "flex";
                 document.getElementById("progress-text").textContent =
                     "Starting download...";
+                document.getElementById("progress-text").className = "";
                 document.getElementById("progress-bar").value = 0;
                 document.getElementById("progress-details").textContent = "";
 
-                // Start download
+                // Push item entry to internal history log
+                const newLog = document.createElement("li");
+                newLog.innerHTML = `<span class="history-url">${url}</span><span class="status-indicator processing">Downloading...</span>`;
+
+                // Remove placeholder if present
+                const emptyMsg =
+                    historyList.querySelector(".empty-history-msg");
+                if (emptyMsg) emptyMsg.remove();
+                historyList.prepend(newLog);
+
                 fetch("/download", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -93,12 +176,14 @@
                         "Failed to start download";
                     document.getElementById("progress-text").className =
                         "error";
-                    setTimeout(
-                        () =>
-                            (document.getElementById("popup").style.display =
-                                "none"),
-                        3000,
-                    );
+                    newLog.querySelector(".status-indicator").className =
+                        "status-indicator error";
+                    newLog.querySelector(".status-indicator").textContent =
+                        "Failed";
+                    setTimeout(() => {
+                        popup.style.display = "none";
+                        popup.classList.add("hidden");
+                    }, 3000);
                 });
 
                 let finished = false;
@@ -112,41 +197,44 @@
                                 document.getElementById("progress-text");
                             const progressDetails =
                                 document.getElementById("progress-details");
+                            const statusBadge =
+                                newLog.querySelector(".status-indicator");
 
                             progressBar.value = data.progress || 0;
 
                             if (data.status === "starting") {
                                 progressText.textContent = "Initializing...";
-                                progressText.className = "";
                             } else if (data.status === "extracting") {
                                 progressText.textContent =
                                     "Extracting video information...";
-                                progressText.className = "";
                             } else if (data.status === "downloading") {
                                 progressText.textContent =
                                     data.message || "Downloading...";
-                                progressText.className = "";
                                 progressDetails.textContent = `Progress: ${Math.round(data.progress)}%`;
                             } else if (data.status === "downloading_multiple") {
                                 progressText.textContent =
                                     data.message || "Downloading playlist...";
-                                progressText.className = "";
-                                if (data.total_items > 1) {
-                                    progressDetails.textContent = `Item ${data.current_item} of ${data.total_items} • ${Math.round(data.progress)}%`;
-                                } else {
-                                    progressDetails.textContent = `Progress: ${Math.round(data.progress)}%`;
-                                }
+                                progressDetails.textContent =
+                                    data.total_items > 1
+                                        ? `Item ${data.current_item} of ${data.total_items} • ${Math.round(data.progress)}%`
+                                        : `Progress: ${Math.round(data.progress)}%`;
                             } else if (data.status === "finished") {
                                 progressText.textContent =
                                     data.message || "Download completed! ✅";
                                 progressText.className = "success";
                                 progressDetails.textContent = "100% Complete";
+
+                                if (statusBadge) {
+                                    statusBadge.className =
+                                        "status-indicator success";
+                                    statusBadge.textContent = "Completed";
+                                }
+
                                 if (!finished) {
                                     finished = true;
                                     setTimeout(() => {
-                                        document.getElementById(
-                                            "popup",
-                                        ).style.display = "none";
+                                        popup.style.display = "none";
+                                        popup.classList.add("hidden");
                                         document.getElementById("url").value =
                                             "";
                                     }, 3000);
@@ -158,13 +246,17 @@
                                     (data.message || "Unknown error occurred");
                                 progressText.className = "error";
                                 progressDetails.textContent = "";
-                                setTimeout(
-                                    () =>
-                                        (document.getElementById(
-                                            "popup",
-                                        ).style.display = "none"),
-                                    4000,
-                                );
+
+                                if (statusBadge) {
+                                    statusBadge.className =
+                                        "status-indicator error";
+                                    statusBadge.textContent = "Error";
+                                }
+
+                                setTimeout(() => {
+                                    popup.style.display = "none";
+                                    popup.classList.add("hidden");
+                                }, 4000);
                                 clearInterval(interval);
                             }
                         })
@@ -177,17 +269,14 @@
                                 document.getElementById(
                                     "progress-text",
                                 ).className = "error";
-                                setTimeout(
-                                    () =>
-                                        (document.getElementById(
-                                            "popup",
-                                        ).style.display = "none"),
-                                    3000,
-                                );
+                                setTimeout(() => {
+                                    popup.style.display = "none";
+                                    popup.classList.add("hidden");
+                                }, 3000);
                                 clearInterval(interval);
                             }
                         });
-                }, 500); // Check more frequently for smoother updates
+                }, 500);
             };
         </script>
     </body>

@@ -1,212 +1,544 @@
+/* ==========================================================================
+   1. Reset & Ametrine Dark Core Variables
+   ========================================================================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+    --bg-main: #09090b; /* Dark Obsidian Slate */
+    --bg-card: #121218; /* Container background */
+    --bg-input: #1c1c24; /* Sleek Dark inputs */
+
+    --color-text-main: #f4f4f5; /* Off-white readable text */
+    --color-text-muted: #a1a1aa; /* Secondary subtexts / labels */
+
+    /* Ametrine Gemstone Palette (Purple, Violet & Citrine Amber) */
+    --accent-purple: #a855f7; /* Primary Electric Purple */
+    --accent-purple-glow: rgba(168, 85, 247, 0.25);
+    --accent-amber: #f59e0b; /* Highlight Amber */
+    --border-color: rgba(168, 85, 247, 0.15); /* Gemstone thin frame accent */
+
+    --font-stack:
+        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: var(--font-stack);
+    background-color: var(--bg-main);
+    /* Soft ambient background radial canvas lighting mapping */
+    background-image:
+        radial-gradient(
+            at 0% 0%,
+            rgba(168, 85, 247, 0.12) 0px,
+            transparent 50%
+        ),
+        radial-gradient(
+            at 100% 100%,
+            rgba(245, 158, 11, 0.08) 0px,
+            transparent 50%
+        );
     min-height: 100vh;
+    min-height: -webkit-fill-available;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
+    color: var(--color-text-main);
+    overflow-x: hidden;
 }
 
+/* ==========================================================================
+   2. Main Component Card Box
+   ========================================================================== */
 .container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 32px 24px;
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
     width: 100%;
-    max-width: 500px;
-    transition: transform 0.3s ease;
+    max-width: 440px;
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .container:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
+    border-color: rgba(168, 85, 247, 0.35);
+    box-shadow: 0 30px 60px -20px rgba(168, 85, 247, 0.18);
 }
 
+/* Typography Gradient Headers */
 h1 {
     text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    margin-bottom: 28px;
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(
+        135deg,
+        var(--accent-purple) 20%,
+        var(--accent-amber) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
+/* ==========================================================================
+   3. Form Styling Architecture
+   ========================================================================== */
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
     margin-bottom: 8px;
-    font-weight: 600;
-    color: #555;
-    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
 }
 
-input[type="text"], select {
+input[type="text"],
+select {
     width: 100%;
-    padding: 15px;
-    border: 2px solid #e1e5e9;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    background: #fff;
+    font-size: 1rem;
+    color: var(--color-text-main);
+    background-color: var(--bg-input);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
-input[type="text"]:focus, select:focus {
+select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+input[type="text"]:focus,
+select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    transform: translateY(-1px);
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px var(--accent-purple-glow);
 }
 
+.path-hint {
+    font-size: 0.8rem;
+    color: #52525b;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Buttons */
 .download-btn {
     width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent-purple), #8b5cf6);
+    color: #ffffff;
     border: none;
     border-radius: 12px;
-    font-size: 18px;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    transition:
+        transform 0.1s ease,
+        filter 0.2s ease,
+        box-shadow 0.2s ease;
+    letter-spacing: 0.03em;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
 }
 
 .download-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    filter: brightness(1.1);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
 }
 
 .download-btn:active {
-    transform: translateY(0);
+    transform: scale(0.98);
 }
 
-#popup {
-    display: none;
+/* ==========================================================================
+   4. Unified Screen Takeover Layout Overlays (Modals)
+   ========================================================================== */
+.modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(5, 5, 8, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    animation: fadeIn 0.3s ease;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out forwards;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* FIXED: Hide modal elements properly by default on application startup */
+.modal-overlay.hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
 }
 
-#popup-content {
-    background: white;
-    padding: 40px;
+/* Reusable structural cards for popups and download log screen over-take */
+.modal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 32px 24px;
     border-radius: 20px;
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-    animation: slideUp 0.3s ease;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.9);
+    animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-@keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+/* Header Alignment Inside Modals */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 14px;
 }
 
-.loader {
-    width: 60px;
-    height: 60px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-main);
+}
+
+/* Floating Action Trigger Button Styling */
+.floating-action-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+    z-index: 900;
+}
+
+.floating-action-button:hover {
+    transform: scale(1.08);
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 15px var(--accent-purple-glow);
+}
+
+/* Modal Close Button */
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+    color: #f87171;
+}
+
+/* ==========================================================================
+   5. Dynamic History Data View Element Lists
+   ========================================================================== */
+#history-list {
+    list-style: none;
+    max-height: 260px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    padding-right: 4px;
+}
+
+/* Custom Scrollbar configuration matching ametrine specs */
+#history-list::-webkit-scrollbar {
+    width: 6px;
+}
+#history-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+#history-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+#history-list::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-purple);
+}
+
+#history-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.history-url {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-main);
+    text-align: left;
+    flex-grow: 1;
+}
+
+/* Badges for active/finished log outputs */
+.status-indicator {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+.status-indicator.processing {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent-amber);
+}
+.status-indicator.success {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+}
+.status-indicator.error {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+}
+
+.empty-history-msg {
+    color: var(--color-text-muted);
+    font-style: italic;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.clear-history {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #f87171;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-history:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: #f87171;
+}
+
+/* ==========================================================================
+   6. Progress Bars & Loading Spinners
+   ========================================================================== */
+.loader {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top: 3px solid var(--accent-purple);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
     margin: 0 auto 20px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 #progress-text {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    color: #333;
-    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+    color: var(--color-text-main);
+    font-weight: 600;
 }
 
 .progress-container {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 #progress-bar {
     width: 100%;
-    height: 12px;
-    border-radius: 10px;
+    height: 8px;
+    border-radius: 9999px;
     appearance: none;
-    background: #f0f0f0;
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
 }
 
 #progress-bar::-webkit-progress-bar {
-    background: #f0f0f0;
-    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
 }
-
 #progress-bar::-webkit-progress-value {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 10px;
-    transition: width 0.3s ease;
+    background: linear-gradient(
+        90deg,
+        var(--accent-purple),
+        var(--accent-amber)
+    );
+    border-radius: 9999px;
 }
-
 #progress-bar::-moz-progress-bar {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        var(--accent-purple),
+        var(--accent-amber)
+    );
+    border-radius: 9999px;
 }
 
 .progress-details {
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-top: 8px;
 }
 
 .error {
-    color: #e74c3c;
+    color: #f87171;
+    font-weight: 500;
 }
-
 .success {
-    color: #27ae60;
+    color: #34d399;
+    font-weight: 500;
 }
 
-.path-hint {
-    font-size: 0.85em;
-    color: #888;
-    margin-top: 5px;
-    font-style: italic;
+/* ==========================================================================
+   7. Core Keyframes & Mobile Sheet Adaptations
+   ========================================================================== */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+@keyframes mobileSheetIn {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Strict Responsive Layout Adaptations for Small Handheld Devices */
+@media (max-width: 480px) {
+    body {
+        align-items: flex-end; /* Modern bottom-sheet docking layout placement */
+        padding: 12px;
+    }
+
     .container {
-        padding: 20px;
-        margin: 10px;
+        padding: 24px 18px;
+        border-radius: 18px;
+        margin-bottom: 72px; /* Clears floating action triggers layout space */
+    }
+
+    /* Transform screen-takeover modals into native feel slide-up bottom sheets */
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-card {
+        border-radius: 24px 24px 0 0;
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        padding: 28px 20px 40px 20px;
+        animation: mobileSheetIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     h1 {
-        font-size: 2em;
+        font-size: 1.6rem;
+        margin-bottom: 20px;
     }
+    input[type="text"],
+    select,
+    .download-btn {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+    .floating-action-button {
+        bottom: 16px;
+        right: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.15rem;
+    }
+}
 
-    #popup-content {
-        padding: 30px 20px;
+@media (hover: none) {
+    .container:hover {
+        transform: none;
+        box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+        border-color: var(--border-color);
+    }
+    .download-btn:hover {
+        filter: none;
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+    }
+    .floating-action-button:hover {
+        transform: none;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        border-color: var(--border-color);
     }
 }

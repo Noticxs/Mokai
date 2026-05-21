@@ -1,4 +1,6 @@
+import base64
 import os
+import re
 import threading
 import time
 import uuid
@@ -229,19 +231,47 @@ def update_progress_hook(d, download_id):
 @app.route("/")
 def index():
     cleanup_old_downloads()
+
+    # Read index.html content
     with open("index.html", "r") as f:
         html_content = f.read()
+
+    # Read style.css content and prepare for embedding
     with open("style.css", "r") as f:
         css_content = f.read()
+    embedded_css_tag = f"<style>{css_content}</style>"
 
-    embedded_css = f"<style>{css_content}</style>"
+    embedded_favicon_link = '<link rel="icon" href="/Mokai.png" />'
+    try:
+        with open("Mokai.png", "rb") as f:
+            png_data = f.read()
+        base64_png = base64.b64encode(png_data).decode("utf-8")
+        embedded_favicon_link = f'<link rel="icon" href="data:image/png;base64,{base64_png}" type="image/png">'
+    except FileNotFoundError:
+        pass
+    html_content = re.sub(
+        r'<link\s+rel="icon"[^>]*href="/Mokai\.png"[^>]*\/?>',
+        "",
+        html_content,
+        flags=re.IGNORECASE,
+    )
+    html_content = re.sub(
+        r'<link\s+rel="stylesheet"[^>]*href="style\.css"[^>]*\/?>',
+        "",
+        html_content,
+        flags=re.IGNORECASE,
+    )
 
     if "</head>" in html_content:
-        html_content = html_content.replace("</head>", f"{embedded_css}</head>", 1)
+        html_content = html_content.replace(
+            "</head>", f"{embedded_css_tag}{embedded_favicon_link}</head>", 1
+        )
     elif "<body>" in html_content:
-        html_content = html_content.replace("<body>", f"<body>{embedded_css}", 1)
+        html_content = html_content.replace(
+            "<body>", f"<body>{embedded_css_tag}{embedded_favicon_link}", 1
+        )
     else:
-        html_content = f"{embedded_css}{html_content}"
+        html_content = f"{embedded_css_tag}{embedded_favicon_link}{html_content}"
 
     return Response(html_content, mimetype="text/html")
 
