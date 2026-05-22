@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+TryExec=mokai
+Exec=mokai
+Icon=/usr/share/Mokai/icon.png
+Terminal=false
+Categories=Media;Audio;
+
+Name=Mokai
+GenericName=Video Downloader
+Comment=Mokai, download youtube videos as mp4 or mp3.
+StartupNotify=true
+StartupWMClass=Mokai
+Actions=New;
+X-Desktop-File-Install-Version=0.28

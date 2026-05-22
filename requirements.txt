@@ -1,0 +1,5 @@
+# Mokai | The Youtube Downloader Dependencies
+# Copyright (C) 2026 Ametrine Foundation
+
+flask>=3.0.0
+yt-dlp>=2025.0.0

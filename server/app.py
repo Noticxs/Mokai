@@ -1,7 +1,24 @@
+# Mokai | The Youtube Downloader
+# Copyright (C) 2026  Ametrine Foundation
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import base64
 import os
 import random
 import re
+import signal
 import socket
 import threading
 import time
@@ -10,11 +27,24 @@ from collections import defaultdict
 
 import flask
 import yt_dlp
-from flask import Response, jsonify, request
+from flask import Response, jsonify, request, send_from_directory
 
 app = flask.Flask(__name__)
 download_progress = {}
 download_lock = threading.Lock()
+history_file = "history.txt"
+
+home = os.path.expanduser("~")
+
+server_dir = os.path.join(home, ".mokai")
+
+
+# Change "codecs" to "methods"
+@app.route("/shutdown", methods=["POST", "GET"])
+def shutdown():
+    print("Shutdown signal received from C++. Exiting...")
+    os.kill(os.getpid(), signal.SIGINT)
+    return "Server shutting down..."
 
 
 def cleanup_old_downloads():
@@ -145,6 +175,7 @@ def download_file(url, file_format, download_id, custom_path=None):
                         ydl.download([entry["webpage_url"]])
 
                         progress = 10 + count * 80 / total
+                        # FIX: Changed typo 'tMokaiotal' to 'total'
                         update_progress(
                             download_id,
                             "downloading_multiple",
@@ -177,6 +208,7 @@ def download_file(url, file_format, download_id, custom_path=None):
                     1,
                     item_name,
                 )
+
                 ydl.download([url])
                 update_progress(download_id, "finished", 100, "Download completed!")
 
@@ -235,17 +267,17 @@ def index():
     cleanup_old_downloads()
 
     # Read index.html content
-    with open("index.html", "r") as f:
+    with open(f"{server_dir}/index.html", "r") as f:
         html_content = f.read()
 
     # Read style.css content and prepare for embedding
-    with open("style.css", "r") as f:
+    with open(f"{server_dir}/style.css", "r") as f:
         css_content = f.read()
     embedded_css_tag = f"<style>{css_content}</style>"
 
     embedded_favicon_link = '<link rel="icon" href="/Mokai.png" />'
     try:
-        with open("Mokai.png", "rb") as f:
+        with open(f"{server_dir}/Mokai.png", "rb") as f:
             png_data = f.read()
         base64_png = base64.b64encode(png_data).decode("utf-8")
         embedded_favicon_link = f'<link rel="icon" href="data:image/png;base64,{base64_png}" type="image/png">'
@@ -266,7 +298,7 @@ def index():
 
     if "</head>" in html_content:
         html_content = html_content.replace(
-            "</head>", f"{embedded_css_tag}{embedded_favicon_link}</head>", 1
+            "<head>", f"<head>{embedded_css_tag}{embedded_favicon_link}", 1
         )
     elif "<body>" in html_content:
         html_content = html_content.replace(
@@ -284,7 +316,7 @@ def download():
     url = data.get("url", "").strip()
     format_ = data.get("format", "mp4")
     download_id = data.get("download_id")
-    custom_path = data.get("custom_path", "").strip()
+    custom_path = data.get("custom_path", "")
 
     if not url:
         return jsonify({"status": "error", "message": "No URL provided"}), 400
@@ -292,13 +324,10 @@ def download():
     if not download_id:
         download_id = str(uuid.uuid4())
 
-    # Validate custom path if provided
     if custom_path:
-        # Basic path validation
         if not os.path.isabs(custom_path) and not custom_path.startswith("./"):
             custom_path = "./" + custom_path
 
-        # Security check - prevent directory traversal attacks
         try:
             normalized_path = os.path.normpath(custom_path)
             if ".." in normalized_path.split(os.sep):
@@ -311,10 +340,8 @@ def download():
         except Exception:
             return jsonify({"status": "error", "message": "Invalid path format"}), 400
 
-    # Initialize progress tracking
     update_progress(download_id, "starting", 0, "Starting download...")
 
-    # Start download in background thread
     thread = threading.Thread(
         target=download_file, args=(url, format_, download_id, custom_path)
     )
@@ -346,26 +373,6 @@ def log():
     return "", 204
 
 
-def is_port_in_use(port):
-    """Returns True if the port is busy, False if it's free."""
-    # AF_INET = IPv4, SOCK_STREAM = TCP
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        # returns 0 if the connection/binding succeeded (port is in use)
-        return s.connect_ex(("127.0.0.1", port)) == 0
-
-
 if __name__ == "__main__":
     target_port = 2070
-
-    # If the port is busy, find a random available one
-    if is_port_in_use(target_port):
-        print("erroeoew")  # Found the error!
-
-        # Keep picking a random port until we find one that is completely free
-        while True:
-            target_port = random.randint(2000, 3000)
-            if not is_port_in_use(target_port):
-                break
-
-    # Now run Flask safely on the guaranteed-free port
     app.run(host="0.0.0.0", port=target_port, debug=False)
