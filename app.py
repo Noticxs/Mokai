@@ -1,6 +1,8 @@
 import base64
 import os
+import random
 import re
+import socket
 import threading
 import time
 import uuid
@@ -344,5 +346,26 @@ def log():
     return "", 204
 
 
+def is_port_in_use(port):
+    """Returns True if the port is busy, False if it's free."""
+    # AF_INET = IPv4, SOCK_STREAM = TCP
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # returns 0 if the connection/binding succeeded (port is in use)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=2070, debug=False)
+    target_port = 2070
+
+    # If the port is busy, find a random available one
+    if is_port_in_use(target_port):
+        print("erroeoew")  # Found the error!
+
+        # Keep picking a random port until we find one that is completely free
+        while True:
+            target_port = random.randint(2000, 3000)
+            if not is_port_in_use(target_port):
+                break
+
+    # Now run Flask safely on the guaranteed-free port
+    app.run(host="0.0.0.0", port=target_port, debug=False)
