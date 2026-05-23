@@ -9,7 +9,7 @@ git clone https://github.com/Noticxs/Mokai.git
 
 # Build Mokai
 cd Mokai
-make all-arch # or use make 'all-deb' for Debian-based systems
+make
 
 # Install Mokai
 sudo make install
