@@ -89,7 +89,7 @@ def download_file(url, file_format, download_id, custom_path=None):
         update_progress(download_id, "starting", 0, "Initializing download...")
 
         # Set download directory
-        download_dir = custom_path if custom_path else "./music"
+        download_dir = custom_path if custom_path else "./Music"
 
         # Ensure directory exists and is accessible
         try:
