@@ -20,8 +20,8 @@
 #include <python3.14/Python.h>
 #include <iostream>
 #include <thread>
-#include <chrono>
-#include <filesystem> // Added missing header
+#include <stddef.h>
+#include <filesystem>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -45,7 +45,7 @@ bool is_server_ready(const char* ip, int port) {
     return ready;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     const char* home_env = std::getenv("HOME");
     if (!home_env) {
         std::cerr << "Error: HOME environment variable is not set." << std::endl;

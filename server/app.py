@@ -47,18 +47,6 @@ def shutdown():
     return "Server shutting down..."
 
 
-def cleanup_old_downloads():
-    """Clean up downloads older than 1 hour"""
-    current_time = time.time()
-    with download_lock:
-        to_remove = []
-        for download_id, data in download_progress.items():
-            if current_time - data.get("created_at", current_time) > 3600:  # 1 hour
-                to_remove.append(download_id)
-        for download_id in to_remove:
-            del download_progress[download_id]
-
-
 def update_progress(
     download_id,
     status,
@@ -264,7 +252,6 @@ def update_progress_hook(d, download_id):
 
 @app.route("/")
 def index():
-    cleanup_old_downloads()
 
     # Read index.html content
     with open(f"{server_dir}/index.html", "r") as f:

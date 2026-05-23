@@ -30,25 +30,16 @@ OBJS = $(OBJ_DIR)/main.o
 PY_CFLAGS = $(shell python3-config --cflags)
 PY_LIBS   = $(shell python3-config --embed --libs)
 
-# Linux System Dependencies FOR Debian/Ubuntu
-DEB_PKG_LIBS = libwebkit2gtk-4.0-dev libgtk-3-dev
+PKG_LIBS = webkit2gtk-4.1 gtk+-3.0
 
-# Linux System Dependencies FOR Arch/Artix
-ARCH_PKG_LIBS = webkit2gtk-4.1 gtk+-3.0
-
-DEB_SYS_INCS = $(shell pkg-config --cflags $(DEB_PKG_LIBS))
-DEB_LIBS     = $(shell pkg-config --libs $(DEB_PKG_LIBS)) -ldl
-
-ARCH_SYS_INCS = $(shell pkg-config --cflags $(ARCH_PKG_LIBS))
-ARCH_LIBS     = $(shell pkg-config --libs $(ARCH_PKG_LIBS)) -ldl
+SYS_INCS = $(shell pkg-config --cflags $(PKG_LIBS))
+LIBS     = $(shell pkg-config --libs $(PKG_LIBS)) -ldl
 
 WEBVIEW_INC = $(VENDOR_DIR)/webview/core/include/webview
 
-.PHONY: all-arch python-init-deps all-deb build_arch build_deb deb-init-deps arch-init-deps download-dependencies install uninstall clean
+.PHONY: all build init-deps download-dependencies install uninstall clean
 
-all-arch: arch-init-deps download-dependencies build_arch
-
-all-deb: deb-init-deps download-dependencies build_deb
+all: init-deps download-dependencies build
 
 install:
 	install -d $(DESTDIR)$(DOCDIR)
@@ -95,26 +86,7 @@ uninstall:
 	rmdir  $(DESTDIR)$(MOKAIDIR) 2>/dev/null || true
 	rm -rf $(DESTDIR)$(MOKDIR)
 
-python-init-deps:
-	@echo "Installing dependencies..."
-	pip install -r dependencies.txt
-
-	@echo "Dependencies installed."
-
-deb-init-deps:
-	@echo "Installing WebKit and GTK development libraries via apt..."
-	sudo apt-get install -y $(DEB_PKG_LIBS)
-
-	@echo "Installing Python dependencies..."
-	pip install -r requirements.txt
-
-	@echo "Installing ffmpeg..."
-	sudo apt update && sudo apt install ffmpeg -y
-
-	@echo "Dependencies installed."
-
-
-arch-init-deps:
+init-deps:
 	@echo "Installing WebKit and GTK development libraries via pacman..."
 	sudo pacman -S --needed --noconfirm webkit2gtk-4.1 gtk3 pkg-config
 
@@ -124,8 +96,6 @@ arch-init-deps:
 	@echo "Installing ffmpeg..."
 	sudo pacman -S --needed --noconfirm ffmpeg
 
-	@echo "Dependencies installed."
-
 download-dependencies:
 	@mkdir -p $(VENDOR_DIR)
 	@if [ ! -d $(VENDOR_DIR)/webview ]; then \
@@ -134,19 +104,15 @@ download-dependencies:
 	fi
 
 # Link binary
-build_arch: $(OBJS)
-	$(CXX) $(OBJS) -o $(TARGET) $(ARCH_LIBS) $(PY_LIBS)
-	@echo "Linked binary: $(TARGET)"
-
-build_deb: $(OBJS)
-	$(CXX) $(OBJS) -o $(TARGET) $(DEB_LIBS) $(PY_LIBS)
+build: $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(LIBS) $(PY_LIBS)
 	@echo "Linked binary: $(TARGET)"
 
 
 # Compile main source file
 $(OBJ_DIR)/main.o: main.cc $(WEBVIEW_INC)/webview.h
 	@mkdir -p $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -I$(WEBVIEW_INC) $(ARCH_SYS_INCS) -c main.cc -o $@
+	$(CXX) $(CXXFLAGS) -I$(WEBVIEW_INC) $(SYS_INCS) -c main.cc -o $@
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
